@@ -1,9 +1,12 @@
 #GBM PSets:
-work_dir = "C:/BHK/PSet/GBM/Pachyderm/"
-setwd(work_dir)
+# work_dir = "C:/BHK/PSet/GBM/Pachyderm/"
+# setwd(work_dir)
+
+input_dir <- "/pfs/downloadGBMData/"
+input_annotation <- "/pfs/downAnnotations/"
 
 # ==== Data ====
-load("Ensembl.v99.annotation.RData")
+load(paste0(input_dir, "Ensembl.v99.annotation.RData"))
 # GSE152160_RAW.tar -> "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE152160&format=file" 
 # mmc2.xlsx -> "https://www.cell.com/cms/10.1016/j.celrep.2020.107897/attachment/eb4d5373-4278-40fd-8377-8bd36387bacf/mmc2.xlsx",rowNames = TRUE)
 # HK_genes.txt -> "https://www.tau.ac.il/~elieis/HKG/HK_genes.txt"
@@ -152,7 +155,7 @@ GSM_map<-GSM_map[, c("Patient_id","Replicate","cellid", "accession_id")]
 # ============= expression data =============
 #Creating eset from raw expression data 
 # GSE152160_RAW.tar file to be downloaded from here "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE152160&format=file" 
-untar(paste(work_dir, "GSE152160_RAW.tar", sep=""), exdir="GSE152160_RAW")#Unpack the CEL files
+untar(paste(input_dir, "GSE152160_RAW.tar", sep=""), exdir="GSE152160_RAW")#Unpack the CEL files
 cels<-list.files("GSE152160_RAW/", pattern = "CEL")
 sapply(paste("GSE152160_RAW", cels, sep="/"), GEOquery::gunzip)
 
@@ -175,7 +178,7 @@ feat_exp<-fdata_builder(annotation=features_gene, assay=assay_exp,ID_column="gen
 feat_exp$BEST<-NA
 
 # Pheno data expression
-cell<-read.xlsx(paste(work_dir, "mmc2.xlsx", sep=""),rowNames = TRUE)#Cell_line names
+cell<-read.xlsx(paste(input_dir, "mmc2.xlsx", sep=""),rowNames = TRUE)#Cell_line names
 cell$Patient_id<-rownames(cell)
 phen_exp<-merge(GSM_map , cell, by="Patient_id" , all.x=TRUE)
 phen_exp<-phen_exp[, c(1:4 , 11:15)]
@@ -196,7 +199,7 @@ exp_eSet<- ExpressionSet(assayData = as.matrix(assay_exp), phenoData = Annotated
                          protocolData=AnnotatedDataFrame(protocol_exp)) 
 
 # ============= Normalizing based on negative control genes =============
-ctrl<-read.delim(paste(work_dir, "HK_genes.txt", sep=""),stringsAsFactors = FALSE, header = FALSE) # Negative control genes 
+ctrl<-read.delim(paste(input_dir, "HK_genes.txt", sep=""),stringsAsFactors = FALSE, header = FALSE) # Negative control genes 
 ctrl$gene_name<-gsub(" ","",ctrl$V1) #Removing spaces from the gene names
 ctrl<-merge(ctrl, feat_exp[,c("gene_name","gene_id")], by="gene_name")
 ctrl_ind<-which(rownames(assay_exp) %in% ctrl$gene_id) 
@@ -281,7 +284,7 @@ exp_eSet_probe<- ExpressionSet(assayData = as.matrix(assay_exp_probe), phenoData
 
 # ============= CNV data =============
 
-assay_cnv<- read.delim(paste(work_dir,"HGCC_DNA_copy_number_gene_level.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE)
+assay_cnv<- read.delim(paste(input_dir,"HGCC_DNA_copy_number_gene_level.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE)
 rownames(assay_cnv)<-assay_cnv$Row
 assay_cnv<-assay_cnv[,-1]
 
@@ -295,7 +298,7 @@ cnv_eSet<- ExpressionSet(assayData = as.matrix(assay_cnv), phenoData = Annotated
 
 # ============= Mutation data =============
 #Assay data
-mutation<- read.delim(paste(work_dir, "HGCC_WES_mutations_variants.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE,na.strings=c("", " ", "NA","NaN"))
+mutation<- read.delim(paste(input_dir, "HGCC_WES_mutations_variants.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE,na.strings=c("", " ", "NA","NaN"))
 
 mutation$CELL_LINE<- paste("U", mutation $CELL_LINE, sep="")
 assay_mut<-data.frame(matrix("wt", nrow = length(unique(mutation$Gene.refGene[!is.na(mutation$Gene.refGene)])), ncol = length(unique(mutation$CELL_LINE))))
@@ -330,22 +333,22 @@ mutation_eSet<- ExpressionSet(assayData = as.matrix(assay_mut), phenoData = Anno
 
 # ============= Methylation data =============
 #Assay data
-assay_methyl<- read.delim(paste(work_dir, "HGCC_DNA_methylation.txt", sep=""), header=T, sep="\t",stringsAsFactors = FALSE)
-illum<-read.csv(paste(work_dir,"MethylationEPIC_v-1-0_B2.csv", sep=""),skip=7, stringsAsFactors = FALSE) #The first 7 rows are not informative 
+assay_methyl<- read.delim(paste(input_dir, "HGCC_DNA_methylation.txt", sep=""), header=T, sep="\t",stringsAsFactors = FALSE)
+illum<-read.csv(paste(input_dir,"MethylationEPIC_v-1-0_B2.csv", sep=""),skip=7, stringsAsFactors = FALSE) #The first 7 rows are not informative 
 
 #Removing SNP probes and sex chromosome probes
 assay_methyl<-assay_methyl[-c(grep("rs",rownames(assay_methyl))),]
 assay_methyl<-assay_methyl[-c(grep("ch.X",rownames(assay_methyl))),]
 
 #Removing cross-reactive and polymorphic probes
-polymorph_probes<-read.delim(paste(work_dir, "1-s2.0-S221359601630071X-mmc1.txt", sep=""), stringsAsFactors = FALSE)
-cross_probes<-read.delim(paste(work_dir,"1-s2.0-S221359601630071X-mmc2.txt", sep=""), header=F , stringsAsFactors = FALSE)
+polymorph_probes<-read.delim(paste(input_dir, "1-s2.0-S221359601630071X-mmc1.txt", sep=""), stringsAsFactors = FALSE)
+cross_probes<-read.delim(paste(input_dir,"1-s2.0-S221359601630071X-mmc2.txt", sep=""), header=F , stringsAsFactors = FALSE)
 assay_methyl<-assay_methyl[rownames(assay_methyl) %in% polymorph_probes$IlmnID == FALSE,]
 assay_methyl<-assay_methyl[rownames(assay_methyl) %in% cross_probes$V1 == FALSE,]
 colnames(assay_methyl)[colnames(assay_methyl) == "hAstro"]<-"human_astrocytes"
 
 #Assay data gene-level
-assay_methyl_gene<-read.delim(paste(work_dir ,"methMat.txt", sep=""), sep="\t", stringsAsFactors = FALSE)
+assay_methyl_gene<-read.delim(paste(input_dir ,"methMat.txt", sep=""), sep="\t", stringsAsFactors = FALSE)
 colnames(assay_methyl_gene)[colnames(assay_methyl_gene) == "hAstro"]<-"human_astrocytes"
 
 #Feature data
@@ -402,7 +405,7 @@ all_cell_obj<-as.data.frame(unique(rbindlist( list(phen_exp,phen_cnv,phen_mutati
 rownames(all_cell_obj)<-all_cell_obj$cellid
 
 # ======================== Drug annotation data from Pachy annotation ========================
-drug_with_ids_gbm <- read.csv(paste(work_dir, "drugs_with_ids.csv", sep = "") , stringsAsFactors = FALSE, na.strings = "") #this is the drug with ids file downloaded form pachy annotation repo
+drug_with_ids_gbm <- read.csv(paste(input_annotation, "drugs_with_ids.csv", sep = "") , stringsAsFactors = FALSE, na.strings = "") #this is the drug with ids file downloaded form pachy annotation repo
 
 #To be corrected in "drug_with_ids.csv"
 conc.name <- "Doxorubicin1///Doxorubicin2///Doxorubicin3///Doxorubicin4///Doxorubicin5///Doxorubicin6///Doxorubicin7///Doxorubicin8///Doxorubicin hydrochloride"
@@ -422,7 +425,7 @@ drug_with_ids_gbm$unique.drugid <- ifelse(grepl("Doxorubicin", drug_with_ids_gbm
 
 
 # ======================== Drug object ========================
-drugs<- read.xlsx(paste(work_dir, "mmc3.xlsx", sep="") ,rowNames = TRUE , startRow = 2)
+drugs<- read.xlsx(paste(input_dir, "mmc3.xlsx", sep="") ,rowNames = TRUE , startRow = 2)
 drugs[duplicated(drugs[ , "Compound.name"]),] #Checking duplications in drug names: 3 duplications found
 
 #Replacing duplicated drug names in "Compound.name" column with the correct drug names:
@@ -461,7 +464,7 @@ drugs <- drugs[, 3:ncol(drugs)]
 
 # ======================== Sensitivity data ======================== 
 #Published AUC info
-drug_cell<-read.delim(paste(work_dir , "HGCC_drug_response_AUC.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE)
+drug_cell<-read.delim(paste(input_dir , "HGCC_drug_response_AUC.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE)
 colnames(drug_cell)[colnames(drug_cell)=="X"]<-"GBM.drugid"
 drug_cell<-drug_name_correction(table= drug_cell, column="GBM.drugid")
 temp<-drug_name_correction(table= drug_with_ids_gbm, column="GBM.drugid")
@@ -571,7 +574,7 @@ screen_objects<-function(screen, cell_obj, drug_obj,drug_with_ids,d_c_l){
 # ======================== Creating PSet ========================
 # =============Screen2 =============
 
-screen2<-read.delim(paste(work_dir, "Screen2-drugData.txt", sep=""), stringsAsFactors = FALSE)#Drug_dose_scr2 response data
+screen2<-read.delim(paste(input_dir, "Screen2-drugData.txt", sep=""), stringsAsFactors = FALSE)#Drug_dose_scr2 response data
 
 #Doxirubicin is a typo of Doxorubicin
 screen2$Drug[screen2$Drug == "Doxirubicin1"]<-"Doxorubicin1"
@@ -604,7 +607,7 @@ GBM_scr2_PSet<- PharmacoGx::PharmacoSet("GBM_scr2_PSet",
 GBM_scr2_PSet@annotation$notes <- "This PSet includes drug-dose information from phase II screening of the paper. 1. All cellids in the PSet have prefix of 'U' and suffix of 'MG' (expect for 'human_astrocytes'). 2. Types of mutations affecting mutant cells are concatenated by '///' in the assay data of mutation ESet from 'molecular-profiles' object. 3. All cell and drug metadata can be found in 'cell' and 'drug' objects, respectively. 4. Dose values are based on micromolar. 5. Throughout the 'sensitivity' object, a unique identifier has been created by concatenating drugid-cellid. 6. All raw dose and viability values are in the 'sensitivity-raw' object. 7. 'sensitivity-profiles' includes published-AUC, recomputed_AAC, and recomputed_IC50."
 
 # ============= Screen3 =============
-screen3<-read.delim(paste(work_dir,"Screen3-drugData.txt", sep = ""), stringsAsFactors = FALSE)#Drug_dose_scr2 response data
+screen3<-read.delim(paste(input_dir,"Screen3-drugData.txt", sep = ""), stringsAsFactors = FALSE)#Drug_dose_scr2 response data
 
 #"Vinorelbinetartrate" is differently spelled in GBM_scr2 (with space) and GBM_scr3 (without space)
 #To avoid defining a unique id for a same drug it is manually added to scr3_cur_drug through the below line.
