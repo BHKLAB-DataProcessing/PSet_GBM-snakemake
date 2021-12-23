@@ -4,6 +4,7 @@
 
 input_dir <- "/pfs/downloadGBMData/"
 input_annotation <- "/pfs/downAnnotations/"
+out_dir <- "/pfs/out/" 
 
 # ==== Data ====
 load(paste0(input_dir, "Ensembl.v99.annotation.RData"))
@@ -23,7 +24,6 @@ load(paste0(input_dir, "Ensembl.v99.annotation.RData"))
 #Install brainarray package:
 #download the library from here: http://mbni.org/customcdf/24.0.0/ensg.download/hta20hsensgcdf_24.0.0.tar.gz
 #If required run ----> BiocManager::install("AnnotationDbi")
-install.packages("hta20hsensgcdf_24.0.0.tar.gz", sep="", repos = NULL, type = "source")
 
 # Loading packages
 library(data.table)
@@ -41,7 +41,8 @@ library(PharmacoGx)
 library(abind)
 library(reshape2)
 library(CoreGx)
-
+library(AnnotationDbi)
+install.packages(paste0(input_dir, "hta20hsensgcdf_24.0.0.tar.gz"), sep="", repos = NULL, type = "source")
 #Functions
 # ======================== drug_name_correction ========================
 #Function to find the synonym drug names by not considering the salts and unwanted punctuation
@@ -646,6 +647,4 @@ GBM_scr3_PSet<- PharmacoGx::PharmacoSet("GBM_scr3_PSet",
 
 GBM_scr3_PSet@annotation$notes <- "This PSet includes drug-dose information from phase III screening of the paper. 1. All cellids in the PSet have prefix of 'U' and suffix of 'MG' (expect for 'human_astrocytes'). 2. Types of mutations affecting mutant cells are concatenated by '///' in the assay data of mutation ESet from 'molecular-profiles' object. 3. All cell and drug metadata can be found in 'cell' and 'drug' objects, respectively. 4. Dose values are based on micromolar. 5. Throughout the 'sensitivity' object, a unique identifier has been created by concatenating drugid-cellid. 6. All raw dose and viability values are in the 'sensitivity-raw' object. 7. 'sensitivity-profiles' includes published-AUC, recomputed_AAC, and recomputed_IC50. 8. Numbers in 'replicate' column from the 'cell' object are not interpretable as there are merely dummy numbers emphasizing that the cell line is a replicate."  
 
-
-
-
+saveRDS(GBM_scr3_PSet, paste0(out_dir, "GBM.rds"))
