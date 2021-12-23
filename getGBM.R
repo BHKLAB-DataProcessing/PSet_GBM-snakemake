@@ -158,7 +158,10 @@ GSM_map<-GSM_map[, c("Patient_id","Replicate","cellid", "accession_id")]
 # GSE152160_RAW.tar file to be downloaded from here "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE152160&format=file" 
 untar(paste(input_dir, "GSE152160_RAW.tar", sep=""), exdir="GSE152160_RAW")#Unpack the CEL files
 cels<-list.files("GSE152160_RAW/", pattern = "CEL")
-sapply(paste("GSE152160_RAW", cels, sep="/"), GEOquery::gunzip)
+for(cel in cels){
+  GEOquery::gunzip(filename=paste0("GSE152160_RAW/", cel), overwrite = TRUE, remove = FALSE)
+}
+# sapply(paste("GSE152160_RAW", cels, sep="/"), GEOquery::gunzip)
 
 ####Gene-level expression
 cdf <- "hta20hsensgcdf"
