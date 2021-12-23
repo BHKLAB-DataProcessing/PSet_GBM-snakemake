@@ -159,7 +159,9 @@ GSM_map<-GSM_map[, c("Patient_id","Replicate","cellid", "accession_id")]
 untar(paste(input_dir, "GSE152160_RAW.tar", sep=""), exdir="GSE152160_RAW")#Unpack the CEL files
 cels<-list.files("GSE152160_RAW/", pattern = "CEL")
 for(cel in cels){
-  GEOquery::gunzip(filename=paste0("GSE152160_RAW/", cel), overwrite = TRUE, remove = FALSE)
+  if(!file.exists(paste0("GSE152160_RAW/", gsub("[.]gz$", "", cel)))){
+    GEOquery::gunzip(filename=paste0("GSE152160_RAW/", cel), overwrite = TRUE, remove = FALSE)
+  }
 }
 # sapply(paste("GSE152160_RAW", cels, sep="/"), GEOquery::gunzip)
 
