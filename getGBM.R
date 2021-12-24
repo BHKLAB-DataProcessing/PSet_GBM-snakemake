@@ -25,6 +25,12 @@ load(paste0(input_dir, "Ensembl.v99.annotation.RData"))
 #download the library from here: http://mbni.org/customcdf/24.0.0/ensg.download/hta20hsensgcdf_24.0.0.tar.gz
 #If required run ----> BiocManager::install("AnnotationDbi")
 
+# Troubleshooting -- Error; return code from  pthread_create() is 22 when using affy::justRMA()
+# https://support.bioconductor.org/p/122925/#124701 suggests that this issue comes from an affy dependency called preprocessCore library.
+# The following removes affy and preprocessCore libraries, reinstalls preprocessCore with threading disabled.
+remove.packages("preprocessCore")
+BiocManager::install("preprocessCore", configure.args="--disable-threading")
+
 # Loading packages
 library(data.table)
 library(openxlsx)
