@@ -160,6 +160,7 @@ GSM_map<-GSM_map[, c("Patient_id","Replicate","cellid", "accession_id")]
 
 # ======================== Molecular Profiles ========================
 # ============= expression data =============
+print("expression data")
 #Creating eset from raw expression data 
 # GSE152160_RAW.tar file to be downloaded from here "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE152160&format=file" 
 untar(paste(input_dir, "GSE152160_RAW.tar", sep=""), exdir="GSE152160_RAW")#Unpack the CEL files
@@ -209,7 +210,7 @@ protocol_exp<-protocol_exp[rownames(phen_exp),]#rearranging the rownames so it i
 exp_eSet<- ExpressionSet(assayData = as.matrix(assay_exp), phenoData = AnnotatedDataFrame(phen_exp), 
                          featureData = AnnotatedDataFrame(feat_exp),
                          protocolData=AnnotatedDataFrame(protocol_exp)) 
-
+print("expression data - normalized based on RMA only: done")
 # ============= Normalizing based on negative control genes =============
 ctrl<-read.delim(paste(input_dir, "HK_genes.txt", sep=""),stringsAsFactors = FALSE, header = FALSE) # Negative control genes 
 ctrl$gene_name<-gsub(" ","",ctrl$V1) #Removing spaces from the gene names
@@ -264,7 +265,7 @@ protocol_exp_ruv<-protocol_exp_ruv[rownames(phen_exp),]#rearranging the rownames
 exp_eSet_ruv<- ExpressionSet(assayData = as.matrix(assay_exp_ruv), phenoData = AnnotatedDataFrame(phen_exp), 
                              featureData = AnnotatedDataFrame(feat_exp),
                              protocolData=AnnotatedDataFrame(protocol_exp_ruv)) 
-
+print("expression data - creating ExpressionSet RUV: done")
 # ============= Probe-level expression =============
 raw_data<- oligo::read.celfiles(cels) # If required run this: memory.limit(size=76000) , memory.limit()
 norm_data<-rma(raw_data,target="core") # Perform RMA normalization
@@ -293,7 +294,7 @@ protocol_exp_probe<-protocol_exp_probe[rownames(phen_exp),]#rearranging the rown
 exp_eSet_probe<- ExpressionSet(assayData = as.matrix(assay_exp_probe), phenoData = AnnotatedDataFrame(phen_exp), 
                                featureData = AnnotatedDataFrame(feat_exp_probe),
                                protocolData=AnnotatedDataFrame(protocol_exp_probe)) 
-
+print("expression data - probe level expression: done")
 # ============= CNV data =============
 
 assay_cnv<- read.delim(paste(input_dir,"HGCC_DNA_copy_number_gene_level.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE)
@@ -307,7 +308,7 @@ phen_cnv$Replicate[phen_cnv$cellid=="U10000" |phen_cnv$cellid=="U10001" ]<-NA
 #Creating ExpressionSet 
 assay_cnv<-assay_cnv[,rownames(phen_cnv)]#rearranging the colnames so it is similar to pheno data
 cnv_eSet<- ExpressionSet(assayData = as.matrix(assay_cnv), phenoData = AnnotatedDataFrame(phen_cnv), featureData = AnnotatedDataFrame(feat_cnv)) 
-
+print("CNV: done")
 # ============= Mutation data =============
 #Assay data
 mutation<- read.delim(paste(input_dir, "HGCC_WES_mutations_variants.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE,na.strings=c("", " ", "NA","NaN"))
@@ -342,7 +343,7 @@ phen_mutation$Patient_id[phen_mutation$cellid=="U3067"]<-"U3067MG"# Based on "GS
 #Creating ExpressionSet 
 assay_mut<-assay_mut[,rownames(phen_mutation)]#rearranging the colnames so it is similar to pheno data
 mutation_eSet<- ExpressionSet(assayData = as.matrix(assay_mut), phenoData = AnnotatedDataFrame(phen_mutation), featureData = AnnotatedDataFrame(feat_mutation)) 
-
+print("Mutation: done")
 # ============= Methylation data =============
 #Assay data
 assay_methyl<- read.delim(paste(input_dir, "HGCC_DNA_methylation.txt", sep=""), header=T, sep="\t",stringsAsFactors = FALSE)
@@ -399,7 +400,7 @@ methyl_gene_eSet<- ExpressionSet(assayData = as.matrix(assay_methyl_gene),
                                  phenoData = AnnotatedDataFrame(phen_methyl), 
                                  featureData = AnnotatedDataFrame(feat_methyl_gene),
                                  protocolData=AnnotatedDataFrame(protocol_methyl_gene)) 
-
+print("Methylation: done")
 # ============= SE objects =============
 #Checks are included in the eSetToSE function
 expression_SE<- eSetToSE(exp_eSet,annot_name="rna")
@@ -409,13 +410,13 @@ cnv_SE <- eSetToSE(cnv_eSet,annot_name="cnv")
 mutation_SE <- eSetToSE(mutation_eSet,annot_name="mut")
 methyl_gene_SE <- eSetToSE(methyl_gene_eSet,annot_name="methyl_gene")
 methyl_SE <- eSetToSE(methyl_eSet,annot_name="methyl_probe")
-
+print("SE objects: done")
 # ======================== Cell object ========================
 #Gathering cell lines from all the experiments
 phen_exp<-phen_exp[,colnames(phen_cnv)] # Reordeing the columns of phen_exp for rbind
 all_cell_obj<-as.data.frame(unique(rbindlist( list(phen_exp,phen_cnv,phen_mutation,phen_methyl))))
 rownames(all_cell_obj)<-all_cell_obj$cellid
-
+print("Cell object: done")
 # ======================== Drug annotation data from Pachy annotation ========================
 drug_with_ids_gbm <- read.csv(paste(input_annotation, "drugs_with_ids.csv", sep = "") , stringsAsFactors = FALSE, na.strings = "") #this is the drug with ids file downloaded form pachy annotation repo
 
@@ -435,7 +436,7 @@ for(j in 1:length(names)){
 drug_with_ids_gbm <- drug_with_ids_gbm[-ind,]
 drug_with_ids_gbm$unique.drugid <- ifelse(grepl("Doxorubicin", drug_with_ids_gbm$GBM.drugid), drug_with_ids_gbm$GBM.drugid, drug_with_ids_gbm$unique.drugid) 
 
-
+print("Drug annotation: done")
 # ======================== Drug object ========================
 drugs<- read.xlsx(paste(input_dir, "mmc3.xlsx", sep="") ,rowNames = TRUE , startRow = 2)
 drugs[duplicated(drugs[ , "Compound.name"]),] #Checking duplications in drug names: 3 duplications found
@@ -473,7 +474,7 @@ setdiff(drugs$clean.ids , drug_with_ids_gbm$clean.ids)
 drugs <- merge(drug_with_ids_gbm[!is.na(drug_with_ids_gbm$GBM.drugid), c("GBM.drugid", "clean.ids", "unique.drugid")],drugs, by="clean.ids",all.x = TRUE)
 rownames(drugs) <- drugs$unique.drugid
 drugs <- drugs[, 3:ncol(drugs)]
-
+print("Drug object: done")
 # ======================== Sensitivity data ======================== 
 #Published AUC info
 drug_cell<-read.delim(paste(input_dir , "HGCC_drug_response_AUC.txt", sep=""), header=T, sep="\t", stringsAsFactors = FALSE)
@@ -488,7 +489,7 @@ rm(temp)
 #Transposing from wide to long 
 drug_cell_long<- melt(setDT(drug_cell), id.vars = "unique.drugid", variable.name = "Pat")
 drug_cell_long$EXP_details<-paste(drug_cell_long$unique.drugid, drug_cell_long$Pat , sep ="_")
-
+print("Sensitivity data: done")
 # ======================== Screens ========================
 
 screen_objects<-function(screen, cell_obj, drug_obj,drug_with_ids,d_c_l){
@@ -582,10 +583,10 @@ screen_objects<-function(screen, cell_obj, drug_obj,drug_with_ids,d_c_l){
               "cell_obj"= scr_cell_obj, "drug_obj"= scr_drugs,
               "cur_cell"= scr_cur_cell, "cur_drug"= scr_cur_drug,"cur_tissue"= scr_cur_tissue))
 }
-
+print("Screens: done")
 # ======================== Creating PSet ========================
 # =============Screen2 =============
-
+print("Creating GBM_scr2_PSet")
 screen2<-read.delim(paste(input_dir, "Screen2-drugData.txt", sep=""), stringsAsFactors = FALSE)#Drug_dose_scr2 response data
 
 #Doxirubicin is a typo of Doxorubicin
@@ -617,8 +618,9 @@ GBM_scr2_PSet<- PharmacoGx::PharmacoSet("GBM_scr2_PSet",
                                         verify = TRUE)
 
 GBM_scr2_PSet@annotation$notes <- "This PSet includes drug-dose information from phase II screening of the paper. 1. All cellids in the PSet have prefix of 'U' and suffix of 'MG' (expect for 'human_astrocytes'). 2. Types of mutations affecting mutant cells are concatenated by '///' in the assay data of mutation ESet from 'molecular-profiles' object. 3. All cell and drug metadata can be found in 'cell' and 'drug' objects, respectively. 4. Dose values are based on micromolar. 5. Throughout the 'sensitivity' object, a unique identifier has been created by concatenating drugid-cellid. 6. All raw dose and viability values are in the 'sensitivity-raw' object. 7. 'sensitivity-profiles' includes published-AUC, recomputed_AAC, and recomputed_IC50."
-
+saveRDS(GBM_scr2_PSet, paste0(out_dir, "GBM_scr2.rds"))
 # ============= Screen3 =============
+print("Creating GBM_scr3_PSet")
 screen3<-read.delim(paste(input_dir,"Screen3-drugData.txt", sep = ""), stringsAsFactors = FALSE)#Drug_dose_scr2 response data
 
 #"Vinorelbinetartrate" is differently spelled in GBM_scr2 (with space) and GBM_scr3 (without space)
@@ -658,4 +660,4 @@ GBM_scr3_PSet<- PharmacoGx::PharmacoSet("GBM_scr3_PSet",
 
 GBM_scr3_PSet@annotation$notes <- "This PSet includes drug-dose information from phase III screening of the paper. 1. All cellids in the PSet have prefix of 'U' and suffix of 'MG' (expect for 'human_astrocytes'). 2. Types of mutations affecting mutant cells are concatenated by '///' in the assay data of mutation ESet from 'molecular-profiles' object. 3. All cell and drug metadata can be found in 'cell' and 'drug' objects, respectively. 4. Dose values are based on micromolar. 5. Throughout the 'sensitivity' object, a unique identifier has been created by concatenating drugid-cellid. 6. All raw dose and viability values are in the 'sensitivity-raw' object. 7. 'sensitivity-profiles' includes published-AUC, recomputed_AAC, and recomputed_IC50. 8. Numbers in 'replicate' column from the 'cell' object are not interpretable as there are merely dummy numbers emphasizing that the cell line is a replicate."  
 
-saveRDS(GBM_scr3_PSet, paste0(out_dir, "GBM.rds"))
+saveRDS(GBM_scr3_PSet, paste0(out_dir, "GBM_scr3.rds"))
