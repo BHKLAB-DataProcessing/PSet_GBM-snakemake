@@ -1,2 +1,2 @@
 # getGBM
-Script to create GBM PSet
+Script to create GBM PSet.
