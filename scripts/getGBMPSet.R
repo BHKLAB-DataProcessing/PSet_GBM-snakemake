@@ -11,7 +11,7 @@ expression_ruv_SE <- readRDS(file.path(input_dir, "expression_ruv_SE.rds"))
 cnv_SE <- readRDS(file.path(input_dir, "cnv_SE.rds"))
 mutation_SE <- readRDS(file.path(input_dir, "mutation_SE.rds"))
 methyl_SE <- readRDS(file.path(input_dir, "methyl_SE.rds"))
-methyl_gene_SE <- readRDS(fil.epath(input_dir, "methyl_gene_SE.rds"))
+methyl_gene_SE <- readRDS(file.path(input_dir, "methyl_gene_SE.rds"))
 scr2_objects <- readRDS(file.path(input_dir, "scr2_objects.rds"))
 scr3_objects <- readRDS(file.path(input_dir, "scr3_objects.rds"))
 

@@ -1,8 +1,8 @@
 # Troubleshooting -- Error; return code from  pthread_create() is 22 when using affy::justRMA()
 # https://support.bioconductor.org/p/122925/#124701 suggests that this issue comes from an affy dependency called preprocessCore library.
 # The following removes affy and preprocessCore libraries, reinstalls preprocessCore with threading disabled.
-remove.packages("preprocessCore")
-BiocManager::install("preprocessCore", configure.args = "--disable-threading")
+# remove.packages("preprocessCore")
+# BiocManager::install("preprocessCore", configure.args = "--disable-threading")
 
 library(stringr)
 library(Biobase)
@@ -20,10 +20,15 @@ args <- commandArgs(trailingOnly = TRUE)
 download_dir <- paste0(args[1], "download")
 processed_dir <- paste0(args[1], "processed")
 
+# download_dir <- '/Users/minoru/Code/bhklab/DataProcessing/PSet/getGBMPSet/download'
+# processed_dir <- '/Users/minoru/Code/bhklab/DataProcessing/PSet/getGBMPSet/processed'
+# functions <- '/Users/minoru/Code/bhklab/DataProcessing/PSet/getGBMPSet/scripts/functions.R'
+
 functions <- paste0(args[1], "scripts/functions.R")
 source(functions)
 
 install.packages(file.path(download_dir, "hta20hsensgcdf_24.0.0.tar.gz"), sep = "", repos = NULL, type = "source")
+library('hta20hsensgcdf')                                                                                                                                          
 
 load(file.path(download_dir, "Ensembl.v99.annotation.RData"))
 cell <- readRDS(file.path(processed_dir, "cell.rds"))
@@ -66,18 +71,23 @@ print("expression data")
 # Creating eset from raw expression data
 # GSE152160_RAW.tar file to be downloaded from here "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE152160&format=file"
 untar(file.path(download_dir, "GSE152160_RAW.tar"), exdir = file.path(processed_dir, "GSE152160_RAW")) # Unpack the CEL files
-cels <- list.files("GSE152160_RAW/", pattern = "CEL")
+cels <- list.files(file.path(processed_dir, "GSE152160_RAW"), pattern = "CEL")
 for (cel in cels) {
-  if (!file.exists(paste0("GSE152160_RAW/", gsub("[.]gz$", "", cel)))) {
-    GEOquery::gunzip(filename = paste0("GSE152160_RAW/", cel), overwrite = TRUE, remove = FALSE)
+  if (!file.exists(paste0(file.path(processed_dir, "GSE152160_RAW"), '/', gsub("[.]gz$", "", cel)))) {
+    GEOquery::gunzip(filename = file.path(processed_dir, "GSE152160_RAW", cel), overwrite = TRUE, remove = FALSE)
   }
 }
 # sapply(paste("GSE152160_RAW", cels, sep="/"), GEOquery::gunzip)
 
 #### Gene-level expression
 cdf <- "hta20hsensgcdf"
-cels <- list.celfiles("GSE152160_RAW/", full.names = TRUE) # Raw_expression Folder includes 145 CEL files
-expr_cel <- affy::justRMA(filenames = cels, verbose = TRUE, cdfname = cdf)
+cels <- list.celfiles(file.path(processed_dir, "GSE152160_RAW")) # Raw_expression Folder includes 145 CEL files
+expr_cel <- justRMA(
+  filenames = cels, 
+  celfile.path=file.path(processed_dir, 'GSE152160_RAW'),
+  verbose = TRUE, 
+  cdfname = cdf
+)
 
 # Assay data expression
 assay_exp <- as.data.frame(exprs(expr_cel))
@@ -172,7 +182,7 @@ print("expression data - creating ExpressionSet RUV: done")
 
 # ============= Probe-level expression =============
 # memory.limit(size=76000)
-raw_data <- oligo::read.celfiles(cels) # If required run this: memory.limit(size=76000) , memory.limit()
+raw_data <- oligo::read.celfiles(file.path(processed_dir, 'GSE152160_RAW', cels)) # If required run this: memory.limit(size=76000) , memory.limit()
 norm_data <- rma(raw_data, target = "core") # Perform RMA normalization
 norm_main <- getMainProbes(norm_data, level = "core") # Remove the control transcripts (Controls do not match to any genes)
 norm_main_annot <- annotateEset(norm_main, pd.hta.2.0) # Annotating the eset on transcript level : "https://support.bioconductor.org/p/89308/"

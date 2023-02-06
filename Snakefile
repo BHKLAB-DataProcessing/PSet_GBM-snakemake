@@ -8,43 +8,43 @@ from snakemake.remote.S3 import RemoteProvider as S3RemoteProvider
 
 prefix = config["prefix"]
 
-# rule get_gbm_pset:
-#     input:
-#         prefix + "processed/expression_SE.rds",
-#         prefix + "processed/expression_probe_SE.rds",
-#         prefix + "processed/expression_ruv_SE.rds",
-#         prefix + "processed/cnv_SE.rds",
-#         prefix + "processed/mutation_SE.rds",
-#         prefix + "processed/methyl_SE.rds",
-#         prefix + "processed/methyl_gene_SE.rds",
-#         prefix + "processed/scr2_objects.rds",
-#         prefix + "processed/scr3_objects.rds"
-#     output:
-#         prefix + "GBM_scr2.rds",
-#         prefix + "GBM_scr3.rds"
-#     shell:
-#         """
-#         Rscript {prefix}scripts/getGBMPSet.R {prefix}
-#         """
+rule get_gbm_pset:
+    input:
+        prefix + "processed/expression_SE.rds",
+        prefix + "processed/expression_probe_SE.rds",
+        prefix + "processed/expression_ruv_SE.rds",
+        prefix + "processed/cnv_SE.rds",
+        prefix + "processed/mutation_SE.rds",
+        prefix + "processed/methyl_SE.rds",
+        prefix + "processed/methyl_gene_SE.rds",
+        prefix + "processed/scr2_objects.rds",
+        prefix + "processed/scr3_objects.rds"
+    output:
+        prefix + "GBM_scr2.rds",
+        prefix + "GBM_scr3.rds"
+    shell:
+        """
+        Rscript {prefix}scripts/getGBMPSet.R {prefix}
+        """
 
-# rule process_drug_screen:
-#     input:
-#         prefix + "download/drugs_with_ids.csv",
-#         prefix + "download/mmc3.xlsx",
-#         prefix + "download/HGCC_drug_response_AUC.txt",
-#         prefix + "download/Screen2-drugData.txt",
-#         prefix + "download/Screen3-drugData.txt",
-#         prefix + "processed/phen_exp.rds",
-#         prefix + "processed/phen_cnv.rds",
-#         prefix + "processed/phen_mutation.rds",
-#         prefix + "processed/phen_methyl.rds"
-#     output:
-#         prefix + "processed/scr2_objects.rds",
-#         prefix + "processed/scr3_objects.rds"
-#     shell:
-#         """
-#         Rscript {prefix}scripts/getGBMDrugScreen.R {prefix}
-#         """
+rule process_drug_screen:
+    input:
+        prefix + "download/drugs_with_ids.csv",
+        prefix + "download/mmc3.xlsx",
+        prefix + "download/HGCC_drug_response_AUC.txt",
+        prefix + "download/Screen2-drugData.txt",
+        prefix + "download/Screen3-drugData.txt",
+        prefix + "processed/phen_exp.rds",
+        prefix + "processed/phen_cnv.rds",
+        prefix + "processed/phen_mutation.rds",
+        prefix + "processed/phen_methyl.rds"
+    output:
+        prefix + "processed/scr2_objects.rds",
+        prefix + "processed/scr3_objects.rds"
+    shell:
+        """
+        Rscript {prefix}scripts/getGBMDrugScreen.R {prefix}
+        """
 
 rule process_expression:
     input:
