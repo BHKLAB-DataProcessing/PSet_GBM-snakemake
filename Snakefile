@@ -20,8 +20,8 @@ rule get_gbm_pset:
         S3.remote(prefix + "processed/scr2_objects.rds"),
         S3.remote(prefix + "processed/scr3_objects.rds")
     output:
-        prefix + "PSet_GBM_scr2.rds",
-        prefix + "PSet_GBM_scr3.rds"
+        S3.remote(prefix + "PSet_GBM_scr2.rds"),
+        S3.remote(prefix + "PSet_GBM_scr3.rds")
     shell:
         """
         Rscript scripts/getGBMPSet.R {prefix}
